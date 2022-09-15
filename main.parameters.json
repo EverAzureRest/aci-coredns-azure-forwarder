@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "containerGroupName": {
+      "value": "coreDNS"
+    },
+    "cpuRequest": {
+      "value": 1
+    },
+    "memRequest": {
+      "value": 3.5
+    },
+    "gitRepoUrl": {
+      "value": ""
+    },
+    "vnetName": {
+      "value": ""
+    },
+    "vnetRGName": {
+      "value": ""
+    },
+    "subnetName": {
+      "value": ""
+    },
+    "subnetPrefix": {
+      "value": ""
+    },
+    "loadBalancerName": {
+      "value": ""
+    }
+  }
+}
