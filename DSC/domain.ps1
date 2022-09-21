@@ -32,7 +32,7 @@ https://github.com/Microsoft/DomainControllerConfig/blob/master/README.md#versio
 
 #>
 
-#Requires -module @{ModuleName = 'xActiveDirectory';ModuleVersion = '3.0.0'}
+#Requires -module @{ModuleName = 'xActiveDirectory';ModuleVersion = '3.0.0.0'}
 #Requires -module @{ModuleName = 'xStorage'; ModuleVersion = '3.4.0.0'}
 #Requires -module @{ModuleName = 'xPendingReboot'; ModuleVersion = '0.3.0.0'}
 
@@ -63,9 +63,9 @@ configuration DomainControllerConfig
         [String]$domainName
     )
 
-Import-DscResource -ModuleName @{ModuleName = 'xActiveDirectory'; ModuleVersion = '3.0.0.0'}
-Import-DscResource -ModuleName @{ModuleName = 'xStorage'; ModuleVersion = '3.4.0.0'}
-Import-DscResource -ModuleName @{ModuleName = 'xPendingReboot'; ModuleVersion = '0.4.0.0'}
+Import-DscResource -ModuleName xActiveDirectory
+Import-DscResource -ModuleName xStorage
+Import-DscResource -ModuleName xPendingReboot
 Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
 
 # When using with Azure Automation, modify these values to match your stored credential names
