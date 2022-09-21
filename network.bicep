@@ -1,22 +1,60 @@
 targetScope = 'resourceGroup'
 
-param vnetName string
-
-param subnetPrefix string
-
-param subnetName string
+param vnet1Name string
+param vnet1Prefix string
+param vnet2Name string
+param vnet2Prefix string
+param loadBalancerSubnetName string
+param loadBalancerSubnetPrefix string
+param DNSsubnetPrefix string
+param DNSsubnetName string
+param VMSubnetName string
+param VMSubnetPrefix string
+param AzureBastionSubnetPrefix string
+param location string
 
 var delegationName = 'aciVnetDelegation'
 
-resource vnet 'Microsoft.Network/virtualnetworks@2015-05-01-preview' existing = {
-  name: vnetName
+resource vnet1 'Microsoft.Network/virtualnetworks@2022-01-01' = {
+  name: vnet1Name
+  location: location
+  properties: {
+     addressSpace: {
+       addressPrefixes: [
+        vnet1Prefix
+       ]
+     } 
+  }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
-  name: subnetName
-  parent: vnet
+resource vnet2 'Microsoft.Network/virtualNetworks@2022-01-01' = {
+  name: vnet2Name
+  location: location
   properties: {
-    addressPrefix: subnetPrefix
+    addressSpace: {
+      addressPrefixes: [
+        vnet2Prefix
+      ]
+    }
+  }
+}
+
+resource peer 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2022-01-01' = {
+  name: 'vnet1-to-vnet2'
+  parent: vnet1 
+  properties: {
+    peeringState: 'Connected'
+    remoteVirtualNetwork: {
+       id: vnet2.id
+    }
+  }
+}
+
+resource CoreDNSSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' = {
+  name: DNSsubnetName
+  parent: vnet2
+  properties: {
+    addressPrefix: DNSsubnetPrefix
     delegations: [
       {
         name: delegationName
@@ -27,7 +65,34 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
       }
     ]
   }
-  
 }
 
-output subnetId string = subnet.id
+resource loadBalancerSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' = {
+  name: loadBalancerSubnetName
+  parent: vnet2
+  properties: {
+    addressPrefix: loadBalancerSubnetPrefix
+  }
+}
+
+resource BastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' = {
+  name: 'AzureBastionSubnet'
+  parent: vnet1
+  properties: {
+    addressPrefix: AzureBastionSubnetPrefix
+  }
+}
+
+resource VMSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' = {
+  name: VMSubnetName
+  parent: vnet1
+  properties: {
+    addressPrefix: VMSubnetPrefix
+  }
+
+}
+
+output CoreDNSsubnetId string = CoreDNSSubnet.id
+output VMSubnetId string = VMSubnet.id
+output BastionSubnetId string = BastionSubnet.id
+output loadBalancerSubnetId string = loadBalancerSubnet.id
