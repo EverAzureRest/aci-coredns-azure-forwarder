@@ -2,15 +2,15 @@ targetScope = 'resourceGroup'
 
 param automationAccountName string
 param location string
-param gitReporUrl string
 param domainName string
 param domainUser string
 @secure()
 param domainPassword string
+param dscremotepath string
 
-var xadmoduleuri = 'https://devopsgallerystorage.${environment().suffixes.storage}/packages/xactivedirectory.3.0.0.nupkg'
-var xstoragemoduleuri = 'https://devopsgallerystorage.${environment().suffixes.storage}/packages/xstorage.3.4.0.0.nupkg'
-var xpendingrebooturi = 'https://devopsgallerystorage.${environment().suffixes.storage}/packages/xpendingreboot.0.4.0.0.nupkg'
+var xadmoduleuri = 'https://devopsgallerystorage.blob.${environment().suffixes.storage}/packages/xactivedirectory.3.0.0.nupkg'
+var xstoragemoduleuri = 'https://devopsgallerystorage.blob.${environment().suffixes.storage}/packages/xstorage.3.4.0.nupkg'
+var xpendingrebooturi = 'https://devopsgallerystorage.blob.${environment().suffixes.storage}/packages/xpendingreboot.0.4.0.nupkg'
 
 resource automationAccount 'Microsoft.Automation/automationAccounts@2021-06-22' = {
   name: automationAccountName
@@ -27,12 +27,13 @@ resource automationAccount 'Microsoft.Automation/automationAccounts@2021-06-22' 
 }
 
 resource domainDSC 'Microsoft.Automation/automationAccounts/configurations@2019-06-01' = {
-  name: 'ADDomainDSC'
+  name: 'DomainControllerConfig'
   parent: automationAccount
+  location: location
   properties: {
     source: {
      type: 'uri'
-     value: '${gitReporUrl}/DSC/domain.ps1'
+     value: dscremotepath
     }
   }
 }
@@ -81,7 +82,7 @@ resource dscCompile 'Microsoft.Automation/automationAccounts/compilationjobs@202
   parent: automationAccount
   properties: {
     configuration: {
-      name: 'Domain'
+      name: domainDSC.name
     }
     parameters: {
       domainName: domainName

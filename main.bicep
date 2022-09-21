@@ -26,6 +26,7 @@ param domainName string
 @secure()
 param domainPassword string
 param domainUser string
+param dscremotepath string
 param deploymentLocation string = resourceGroup().location
 
 module network 'network.bicep' = {
@@ -101,10 +102,10 @@ module automation 'automation.bicep' = {
   params: {
     automationAccountName: automationAccountName
     location: deploymentLocation
-    gitReporUrl: gitRepoUrl
     domainName: domainName
     domainPassword: domainPassword
     domainUser: domainUser
+    dscremotepath: dscremotepath
   }
 }
 

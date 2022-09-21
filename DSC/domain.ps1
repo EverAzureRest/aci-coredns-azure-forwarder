@@ -63,7 +63,7 @@ configuration DomainControllerConfig
         [String]$domainName
     )
 
-Import-DscResource -ModuleName @{ModuleName = 'xActiveDirectory'; ModuleVersion = '3.0.0'}
+Import-DscResource -ModuleName @{ModuleName = 'xActiveDirectory'; ModuleVersion = '3.0.0.0'}
 Import-DscResource -ModuleName @{ModuleName = 'xStorage'; ModuleVersion = '3.4.0.0'}
 Import-DscResource -ModuleName @{ModuleName = 'xPendingReboot'; ModuleVersion = '0.4.0.0'}
 Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
