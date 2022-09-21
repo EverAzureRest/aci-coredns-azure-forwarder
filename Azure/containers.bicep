@@ -6,7 +6,7 @@ param image string
 param cpuRequest int
 param memRequest int
 param subnetId string
-param gitRepoUrl string
+/*param gitRepoUrl string*/
 
 resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-10-01' = {
   name: containerGroupName
@@ -29,29 +29,25 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-10-01'
               protocol: 'UDP'
             }
           ]
-          volumeMounts: [
-            {
-              name: 'config'
-              mountPath: '/'
-            }
-          ]
         }
       }
-      ]
+     ]
     osType: 'Linux'
+    ipAddress: {
+      type: 'Private'
+      ports: [
+        {
+          port: 53
+          protocol: 'UDP'
+        }
+      ]
+    }
     subnetIds: [
       {
         id: subnetId
       }
     ]
-    volumes: [
-      {
-        name: 'config'
-        gitRepo: {
-          repository: gitRepoUrl
-        }
-      }
-    ]
+    restartPolicy: 'Never'
   }
 }
 
