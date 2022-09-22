@@ -35,6 +35,7 @@ https://github.com/Microsoft/DomainControllerConfig/blob/master/README.md#versio
 #Requires -module @{ModuleName = 'xActiveDirectory';ModuleVersion = '3.0.0.0'}
 #Requires -module @{ModuleName = 'xStorage'; ModuleVersion = '3.4.0.0'}
 #Requires -module @{ModuleName = 'xPendingReboot'; ModuleVersion = '0.3.0.0'}
+#Requires -module @{ModuleName = 'DnsServerDsc'; ModuleVersion = '3.0.0'}
 
 <#
 
@@ -60,12 +61,14 @@ configuration DomainControllerConfig
 {
     param (
         [Parameter(Mandatory)]
-        [String]$domainName
+        [String]$domainName,
+        [String]$forwarderIP
     )
 
 Import-DscResource -ModuleName xActiveDirectory
 Import-DscResource -ModuleName xStorage
 Import-DscResource -ModuleName xPendingReboot
+Import-DscResource -ModuleName DnsServerDSC
 Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
 
 # When using with Azure Automation, modify these values to match your stored credential names
@@ -111,6 +114,15 @@ $safeModeCredential = Get-AutomationPSCredential 'domainCredential'
         LogPath = 'F:\NTDS'
         SysvolPath = 'F:\SYSVOL'
         DependsOn = '[WindowsFeature]ADDSInstall','[xDisk]DiskF','[xPendingReboot]BeforeDC'
+    }
+
+    DnsServerConditionalForwarder 'AzureStorage'
+    {
+        Name    = 'privatelink.blob.core.windows.net'
+        MasterServers   = $forwarderIP
+        ReplicationScope = 'Forest'
+        Ensure  = 'Present'
+        DependsOn = '[WindowsFeature]ADDSInstall','[xDisk]DiskF','[xPendingReboot]BeforeDC','[xADDomain]Domain'
     }
     
     Registry DisableRDPNLA
