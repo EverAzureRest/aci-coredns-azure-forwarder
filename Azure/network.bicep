@@ -11,7 +11,10 @@ param DNSsubnetName string
 param VMSubnetName string
 param VMSubnetPrefix string
 param AzureBastionSubnetPrefix string
+param DCPrivateIP string
 param location string
+param domainControllerSubnetName string
+param domainControllerSubnetPrefix string
 
 var delegationName = 'aciVnetDelegation'
 
@@ -23,6 +26,11 @@ resource vnet1 'Microsoft.Network/virtualnetworks@2022-01-01' = {
        addressPrefixes: [
         vnet1Prefix
        ]
+     }
+     dhcpOptions: {
+      dnsServers: [
+        DCPrivateIP
+      ]
      }
      subnets: [
        {
@@ -72,6 +80,12 @@ resource vnet2 'Microsoft.Network/virtualNetworks@2022-01-01' = {
           addressPrefix: loadBalancerSubnetPrefix
         }
       }
+      {
+        name: domainControllerSubnetName
+        properties: {
+          addressPrefix: domainControllerSubnetPrefix
+        }
+      }
     ]
   }
 }
@@ -94,3 +108,4 @@ output CoreDNSsubnetId string = vnet2.properties.subnets[0].id
 output VMSubnetId string = vnet1.properties.subnets[1].id
 output BastionSubnetId string = vnet1.properties.subnets[0].id
 output loadBalancerSubnetId string = vnet2.properties.subnets[1].id
+output dcSubnetId string = vnet2.properties.subnets[2].id

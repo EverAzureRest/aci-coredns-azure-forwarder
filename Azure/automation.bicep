@@ -7,10 +7,12 @@ param domainUser string
 @secure()
 param domainPassword string
 param dscremotepath string
+param forwarderIP string
 
 var xadmoduleuri = 'https://devopsgallerystorage.blob.${environment().suffixes.storage}/packages/xactivedirectory.3.0.0.nupkg'
 var xstoragemoduleuri = 'https://devopsgallerystorage.blob.${environment().suffixes.storage}/packages/xstorage.3.4.0.nupkg'
 var xpendingrebooturi = 'https://devopsgallerystorage.blob.${environment().suffixes.storage}/packages/xpendingreboot.0.4.0.nupkg'
+var dnsserverdscuri = 'https://devopsgallerystorage.blob.${environment().suffixes.storage}/packages/dnsserverdsc.3.0.0.nupkg'
 
 resource automationAccount 'Microsoft.Automation/automationAccounts@2021-06-22' = {
   name: automationAccountName
@@ -77,15 +79,35 @@ resource rebootModule 'Microsoft.Automation/automationAccounts/modules@2020-01-1
   }
 }
 
-resource dscCompile 'Microsoft.Automation/automationAccounts/compilationjobs@2020-01-13-preview' = {
-  name: 'compileDSC'
+resource dnsModule 'Microsoft.Automation/automationAccounts/modules@2020-01-13-preview' = {
+  name: 'DnsServerDsc'
   parent: automationAccount
   properties: {
+    contentLink: {
+      uri: dnsserverdscuri
+    }
+  }
+}
+
+resource dscCompile 'Microsoft.Automation/automationAccounts/compilationjobs@2020-01-13-preview' = {
+  name: 'comp${uniqueString(subscription().id)}'
+  parent: automationAccount
+  dependsOn: [
+    dnsModule
+    ADModule
+    storageModule
+    rebootModule
+  ]
+  properties: {
+    incrementNodeConfigurationBuild: true
     configuration: {
       name: domainDSC.name
     }
     parameters: {
       domainName: domainName
+      forwarderIP: forwarderIP
     }
   }
 }
+
+output automationAccountName string = automationAccount.name

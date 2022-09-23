@@ -6,7 +6,11 @@ param image string
 param cpuRequest int
 param memRequest int
 param subnetId string
-/*param gitRepoUrl string*/
+param containerRegistryName string
+
+resource registryServer 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' existing = {
+  name: containerRegistryName
+}
 
 resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-10-01' = {
   name: containerGroupName
@@ -32,6 +36,13 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-10-01'
         }
       }
      ]
+    imageRegistryCredentials: [
+      {
+        server: registryServer.properties.loginServer
+        password: registryServer.listCredentials().passwords[0].value
+        username: registryServer.name
+      }
+    ]
     osType: 'Linux'
     ipAddress: {
       type: 'Private'
@@ -47,7 +58,7 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-10-01'
         id: subnetId
       }
     ]
-    restartPolicy: 'Never'
+    restartPolicy: 'OnFailure'
   }
 }
 

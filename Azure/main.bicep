@@ -29,6 +29,10 @@ param domainName string
 param domainPassword string
 param domainUser string
 param dscremotepath string
+param domainControllerName string
+param domainControllerPrivateIP string
+param domainControllerSubnetName string
+param domainControllerSubnetPrefix string
 param deploymentLocation string = resourceGroup().location
 
 module network 'network.bicep' = {
@@ -47,6 +51,9 @@ module network 'network.bicep' = {
     loadBalancerSubnetName: loadBalancerSubnetName
     loadBalancerSubnetPrefix: loadBalancerSubnetPrefix
     location: deploymentLocation
+    DCPrivateIP: domainControllerPrivateIP
+    domainControllerSubnetName: domainControllerSubnetName
+    domainControllerSubnetPrefix: domainControllerSubnetPrefix
   }
 }
 
@@ -58,20 +65,12 @@ module Bastion 'bastion.bicep' = {
     BastionSubnetId: network.outputs.BastionSubnetId
   }
 }
-/*
-module VMs 'vms.bicep' = {
-  name: 'VMDeployment'
-  scope: resourceGroup()
-  params:{
-    
-  }
-}
-*/
+
 module registry 'registry.bicep' = {
   name: 'registryDeployment'
   params: {
     branch: gitBranch
-    containerRegistryName: '${uniqueString(resourceGroup().id)}-registry'
+    containerRegistryName: '${uniqueString(resourceGroup().id)}registry'
     dockerSourceRepo: gitRepoUrl
     imageName: imageName
     imageVersion: 'latest'
@@ -90,6 +89,7 @@ module containerGroupDeployment 'containers.bicep' = [for i in range (0, numberO
     cpuRequest: cpuRequest
     memRequest: memRequest
     subnetId: network.outputs.CoreDNSsubnetId
+    containerRegistryName: registry.outputs.registryName
   }
 }]
 
@@ -100,14 +100,18 @@ module loadBalancer 'loadbalancer.bicep' = {
     loadBalancerName: loadBalancerName
     loadBalancerSubnetId: network.outputs.loadBalancerSubnetId
     location: deploymentLocation
-    backendConfig: [for i in range(0, numberOfInstances): [
+    /*backendConfig: [for i in range(0, numberOfInstances): [
       {
-        name: containerGroupDeployment[i].outputs.containerName
-        properties: {
-          ipAddress: containerGroupDeployment[i].outputs.containerIp
-        }
+        backendName: containerGroupDeployment[i].outputs.containerName
+        backendIP: containerGroupDeployment[i].outputs.containerIp
       }
     ]]
+    Bicep will NOT accept an array format for the back end configuration of the load balancer, so is forcing me to do stupid things 
+    here to deal with the output arrays*/
+    backendname1: containerGroupDeployment[0].outputs.containerName
+    backendIP1: containerGroupDeployment[0].outputs.containerIp
+    backendname2: containerGroupDeployment[1].outputs.containerName
+    backendIP2: containerGroupDeployment[1].outputs.containerIp
   }
 }
 
@@ -120,6 +124,20 @@ module automation 'automation.bicep' = {
     domainPassword: domainPassword
     domainUser: domainUser
     dscremotepath: dscremotepath
+    forwarderIP: loadBalancer.outputs.loadBalancerIP
   }
 }
 
+module VMs 'vms.bicep' = {
+  name: 'VMDeployment'
+  scope: resourceGroup()
+  params:{
+   DCVMName: domainControllerName
+   automationAccountName: automation.outputs.automationAccountName
+   DCPrivateIP: domainControllerPrivateIP
+   location: deploymentLocation
+   DCSubnetID: network.outputs.dcSubnetId
+   domainUsername: domainUser
+   vmPassword: domainPassword
+  }
+}

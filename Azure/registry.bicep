@@ -42,3 +42,4 @@ resource quickBuild 'Microsoft.ContainerRegistry/registries/taskRuns@2019-06-01-
 }
 
 output image string = quickBuild.properties.runRequest.imageNames[0]
+output registryName string = registry.name
