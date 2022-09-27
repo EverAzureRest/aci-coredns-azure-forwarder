@@ -21,7 +21,8 @@ resource automationAccount 'Microsoft.Automation/automationAccounts@2021-06-22' 
     type: 'SystemAssigned'
   }
   properties: {
-    disableLocalAuth: true
+    publicNetworkAccess: true
+    disableLocalAuth: false
     sku: {
       name: 'Basic'
     }
@@ -110,4 +111,7 @@ resource dscCompile 'Microsoft.Automation/automationAccounts/compilationjobs@202
   }
 }
 
+
 output automationAccountName string = automationAccount.name
+output principalId string = automationAccount.identity.principalId
+output automationAccountId string = automationAccount.id

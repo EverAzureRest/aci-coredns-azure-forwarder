@@ -57,7 +57,7 @@ Required modules in Automation service:
 
 #>
 
-configuration DomainControllerConfig
+configuration Domain
 {
     param (
         [Parameter(Mandatory)]
@@ -75,7 +75,8 @@ Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
 $domainCredential = Get-AutomationPSCredential 'domainCredential'
 $safeModeCredential = Get-AutomationPSCredential 'domainCredential'
 
-  node localhost
+
+  node 'localhost'
   {
     WindowsFeature ADDSInstall
     {

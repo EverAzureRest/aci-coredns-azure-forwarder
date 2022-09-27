@@ -128,6 +128,14 @@ module automation 'automation.bicep' = {
   }
 }
 
+module roleAssignment 'roleassignment.bicep' = {
+  name: 'roleAssignment'
+  params: {
+    automationAccountId: automation.outputs.automationAccountId
+    principalId: automation.outputs.principalId
+  }
+}
+
 module VMs 'vms.bicep' = {
   name: 'VMDeployment'
   scope: resourceGroup()
