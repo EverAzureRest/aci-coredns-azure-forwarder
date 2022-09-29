@@ -11,9 +11,10 @@ param vmPassword string
 
 resource automationAccount 'Microsoft.Automation/automationAccounts@2021-06-22' existing = {
   name: automationAccountName
+  scope: resourceGroup()
 }
 
-var registrationUrl = reference(automationAccount.id, '2015-10-31').registrationUrl
+var registrationUrl = reference(resourceId('Microsoft.Automation/automationAccounts', automationAccountName), '2015-10-31').registrationUrl
 
 resource DCNic 'Microsoft.Network/networkInterfaces@2022-01-01' = {
   name: '${DCVMName}-nic'
@@ -103,7 +104,7 @@ resource DCVM 'Microsoft.Compute/virtualMachines@2022-03-01' = {
           }
           {
             Name: 'NodeConfigurationName'
-            Value: 'DomainControllerConfig.localhost'
+            Value: 'Domain.localhost'
             TypeName: 'System.String'
           }
           {

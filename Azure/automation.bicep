@@ -30,7 +30,7 @@ resource automationAccount 'Microsoft.Automation/automationAccounts@2021-06-22' 
 }
 
 resource domainDSC 'Microsoft.Automation/automationAccounts/configurations@2019-06-01' = {
-  name: 'DomainControllerConfig'
+  name: 'Domain'
   parent: automationAccount
   location: location
   properties: {
