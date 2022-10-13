@@ -62,7 +62,8 @@ configuration Domain
     param (
         [Parameter(Mandatory)]
         [String]$domainName,
-        [String]$forwarderIP
+        [String]$forwarderIP1,
+        [String]$forwarderIP2
     )
 
 Import-DscResource -ModuleName xActiveDirectory
@@ -120,7 +121,7 @@ $safeModeCredential = Get-AutomationPSCredential 'domainCredential'
     DnsServerConditionalForwarder 'AzureStorage'
     {
         Name    = 'privatelink.blob.core.windows.net'
-        MasterServers   = $forwarderIP
+        MasterServers   = $forwarderIP1, $forwarderIP2
         ReplicationScope = 'Forest'
         Ensure  = 'Present'
         DependsOn = '[WindowsFeature]ADDSInstall','[xDisk]DiskF','[xPendingReboot]BeforeDC','[xADDomain]Domain'
