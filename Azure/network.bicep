@@ -4,8 +4,8 @@ param vnet1Name string
 param vnet1Prefix string
 param vnet2Name string
 param vnet2Prefix string
-param loadBalancerSubnetName string
-param loadBalancerSubnetPrefix string
+param privateEndpointSubnetName string
+param privateEndpointSubnetPrefix string
 param DNSsubnetPrefix string
 param DNSsubnetName string
 param VMSubnetName string
@@ -75,9 +75,9 @@ resource vnet2 'Microsoft.Network/virtualNetworks@2022-01-01' = {
         }
       }
       {
-        name: loadBalancerSubnetName
+        name: privateEndpointSubnetName
         properties: {
-          addressPrefix: loadBalancerSubnetPrefix
+          addressPrefix: privateEndpointSubnetPrefix
         }
       }
       {
@@ -103,9 +103,21 @@ resource peer 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2022-01-
   }
 }
 
+resource peer2 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2022-01-01' = {
+  name: 'vnet2-to-vnet1'
+  parent: vnet2
+  properties: {
+   peeringState: 'Connected'
+   remoteVirtualNetwork: {
+    id: vnet1.id
+   } 
+  }
+}
+
 
 output CoreDNSsubnetId string = vnet2.properties.subnets[0].id
 output VMSubnetId string = vnet1.properties.subnets[1].id
 output BastionSubnetId string = vnet1.properties.subnets[0].id
-output loadBalancerSubnetId string = vnet2.properties.subnets[1].id
+output privateEndpointSubnetId string = vnet2.properties.subnets[1].id
 output dcSubnetId string = vnet2.properties.subnets[2].id
+output vnetId string = vnet2.id

@@ -7,7 +7,7 @@ param domainUser string
 @secure()
 param domainPassword string
 param dscremotepath string
-param forwarderIP string
+param forwarderIPs array
 
 var xadmoduleuri = 'https://devopsgallerystorage.blob.${environment().suffixes.storage}/packages/xactivedirectory.3.0.0.nupkg'
 var xstoragemoduleuri = 'https://devopsgallerystorage.blob.${environment().suffixes.storage}/packages/xstorage.3.4.0.nupkg'
@@ -106,7 +106,8 @@ resource dscCompile 'Microsoft.Automation/automationAccounts/compilationjobs@202
     }
     parameters: {
       domainName: domainName
-      forwarderIP: forwarderIP
+      forwarderIP1: forwarderIPs[0]
+      forwarderIP2: forwarderIPs[1]
     }
   }
 }

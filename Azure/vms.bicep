@@ -8,6 +8,8 @@ param automationAccountName string
 param domainUsername string
 @secure()
 param vmPassword string
+param testVMName string
+param vmSubnetId string
 
 resource automationAccount 'Microsoft.Automation/automationAccounts@2021-06-22' existing = {
   name: automationAccountName
@@ -32,6 +34,24 @@ resource DCNic 'Microsoft.Network/networkInterfaces@2022-01-01' = {
        } 
     }
    ]
+  }
+}
+
+resource testVMnic 'Microsoft.Network/networkInterfaces@2022-01-01' = {
+  name: '${testVMName}-nic'
+  location: location
+  properties: {
+    ipConfigurations: [
+       {
+        name: '${testVMName}-ipconfig'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          subnet: {
+            id: vmSubnetId
+          }
+        }
+       }
+    ]
   }
 }
 
@@ -127,3 +147,37 @@ resource DCVM 'Microsoft.Compute/virtualMachines@2022-03-01' = {
     }
   }
 }
+
+resource testVM 'Microsoft.Compute/virtualMachines@2022-03-01' = {
+  name: testVMName
+  location: location
+  properties: {
+    hardwareProfile: {
+      vmSize: 'Standard_D2_v3'
+    }
+    osProfile: {
+     adminUsername: domainUsername
+     adminPassword: vmPassword
+     computerName: testVMName
+    }
+    storageProfile: {
+       osDisk: {
+        createOption: 'FromImage'
+       }
+       imageReference: {
+          publisher: 'MicrosoftWindowsServer'
+          offer: 'WindowsServer'
+          sku: '2019-Datacenter'
+          version: 'latest'
+        }
+    }
+    networkProfile: {
+      networkInterfaces: [
+         {
+          id: testVMnic.id
+         }
+      ]
+    }
+  }
+}
+

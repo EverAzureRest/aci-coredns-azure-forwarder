@@ -4,7 +4,7 @@ param containerGroupName string
 param numberOfInstances int = 2
 param cpuRequest int
 param memRequest int
-param gitRepoUrl string
+param gitRepoUrl string = 'https://github.com/EverAzureRest/aci-coredns-azure-forwarder.git'
 @description('Branch name for the Docker build reference in the repository')
 param gitBranch string
 param imageName string
@@ -19,20 +19,21 @@ param DNSsubnetPrefix string
 param VMSubnetName string
 param VMSubnetPrefix string
 param AzureBastionSubnetPrefix string
-param loadBalancerName string
-param loadBalancerSubnetName string
-param loadBalancerSubnetPrefix string
+param privateEndpointSubnetName string
+param privateEndpointSubnetPrefix string
 param automationAccountName string
 @description('FQDN of the AD Domain i.e. contoso.com')
 param domainName string
 @secure()
 param domainPassword string
 param domainUser string
-param dscremotepath string
+param dscremotepath string = 'https://raw.githubusercontent.com/EverAzureRest/aci-coredns-azure-forwarder/main/DSC/domain.ps1'
 param domainControllerName string
 param domainControllerPrivateIP string
 param domainControllerSubnetName string
 param domainControllerSubnetPrefix string
+param testVMName string
+/* by default, we will deploy to the location tag on the Resource Group */
 param deploymentLocation string = resourceGroup().location
 
 module network 'network.bicep' = {
@@ -48,12 +49,21 @@ module network 'network.bicep' = {
     VMSubnetName: VMSubnetName
     VMSubnetPrefix: VMSubnetPrefix
     AzureBastionSubnetPrefix: AzureBastionSubnetPrefix
-    loadBalancerSubnetName: loadBalancerSubnetName
-    loadBalancerSubnetPrefix: loadBalancerSubnetPrefix
+    privateEndpointSubnetName: privateEndpointSubnetName
+    privateEndpointSubnetPrefix: privateEndpointSubnetPrefix
     location: deploymentLocation
     DCPrivateIP: domainControllerPrivateIP
     domainControllerSubnetName: domainControllerSubnetName
     domainControllerSubnetPrefix: domainControllerSubnetPrefix
+  }
+}
+
+module storage 'storage.bicep' = {
+  name: 'StorageDeployment'
+  params: {
+    deploymentLocation: deploymentLocation
+    privateEndpointSubnetId: network.outputs.privateEndpointSubnetId
+    vnetId: network.outputs.vnetId
   }
 }
 
@@ -93,28 +103,6 @@ module containerGroupDeployment 'containers.bicep' = [for i in range (0, numberO
   }
 }]
 
-module loadBalancer 'loadbalancer.bicep' = {
-  name: 'loadBalancerDeployment'
-  dependsOn: containerGroupDeployment
-  params: {
-    loadBalancerName: loadBalancerName
-    loadBalancerSubnetId: network.outputs.loadBalancerSubnetId
-    location: deploymentLocation
-    /*backendConfig: [for i in range(0, numberOfInstances): [
-      {
-        backendName: containerGroupDeployment[i].outputs.containerName
-        backendIP: containerGroupDeployment[i].outputs.containerIp
-      }
-    ]]
-    Bicep will NOT accept an array format for the back end configuration of the load balancer, so is forcing me to do stupid things 
-    here to deal with the output arrays*/
-    backendname1: containerGroupDeployment[0].outputs.containerName
-    backendIP1: containerGroupDeployment[0].outputs.containerIp
-    backendname2: containerGroupDeployment[1].outputs.containerName
-    backendIP2: containerGroupDeployment[1].outputs.containerIp
-  }
-}
-
 module automation 'automation.bicep' = {
   name: 'automationAccountDeployment'
   params: {
@@ -124,15 +112,7 @@ module automation 'automation.bicep' = {
     domainPassword: domainPassword
     domainUser: domainUser
     dscremotepath: dscremotepath
-    forwarderIP: loadBalancer.outputs.loadBalancerIP
-  }
-}
-
-module roleAssignment 'roleassignment.bicep' = {
-  name: 'roleAssignment'
-  params: {
-    automationAccountId: automation.outputs.automationAccountId
-    principalId: automation.outputs.principalId
+    forwarderIPs: [for i in range(0, numberOfInstances): containerGroupDeployment[i].outputs.containerIp]
   }
 }
 
@@ -147,5 +127,7 @@ module VMs 'vms.bicep' = {
    DCSubnetID: network.outputs.dcSubnetId
    domainUsername: domainUser
    vmPassword: domainPassword
+   testVMName: testVMName
+   vmSubnetId: network.outputs.VMSubnetId
   }
 }
