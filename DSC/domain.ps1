@@ -120,7 +120,7 @@ $safeModeCredential = Get-AutomationPSCredential 'domainCredential'
 
     DnsServerConditionalForwarder 'AzureStorage'
     {
-        Name    = 'privatelink.blob.core.windows.net'
+        Name    = 'blob.core.windows.net'
         MasterServers   = $forwarderIP1, $forwarderIP2
         ReplicationScope = 'Forest'
         Ensure  = 'Present'
